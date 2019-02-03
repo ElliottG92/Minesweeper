@@ -18,9 +18,9 @@ class App extends Component {
   
   //this is a function for setting up the minefield
   //size represents the number of squares per side and mines is the number of mines
-  buildMatrix(size) {
+  buildMatrix(size, bombs) {
     let matrix = [];
-    let mines = 10;
+    let mines = bombs;
     const probability = mines / (size * size);
 
     //Build a blank board
@@ -230,11 +230,11 @@ class App extends Component {
       this.setState({ board: matrix });
     }
     if (this.state.difficulty === 'Medium') {
-      const matrix = this.buildMatrix(20, 25);
+      const matrix = this.buildMatrix(13, 18);
       this.setState({ board: matrix });
     }
     if (this.state.difficulty === 'Medium') {
-      const matrix = this.buildMatrix(40, 50);
+      const matrix = this.buildMatrix(20, 30);
       this.setState({ board: matrix });
     }
   }
