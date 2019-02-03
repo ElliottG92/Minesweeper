@@ -1,0 +1,241 @@
+import React, { Component } from 'react';
+import logo from './logo.svg';
+import './App.css';
+import BoardRow from './board-row.js'
+
+class App extends Component {
+  constructor(props){
+    super(props);
+    this.state = {
+      board: [],
+    }
+    this.handleClick = this.handleClick.bind(this);
+    this.handleRightClick = this.handleRightClick.bind(this);
+  }
+  
+  //this is a function for setting up the minefield
+  //size represents the number of squares per side and mines is the number of mines
+  buildMatrix(size) {
+    let matrix = [];
+    let mines = 10;
+    const probability = mines / (size * size);
+
+    //Build a blank board
+
+    for (let i = 0; i < size; i+= 1) {
+      let row = [];
+      for (let j = 0; j < size; j+= 1) {
+        row.push({
+          row: i,
+          column: j,
+          isMine: false,
+          isClicked: false,
+          isFlagged: false,
+          minesTouching: 0,
+        });
+      }
+      matrix.push(row);
+    }
+
+    //Function to add mines to the board
+
+    const placeMines = (board, minesToPlace) => {
+      let matrix = board;
+      let mines = minesToPlace;
+      let size = board.length;
+      while (mines > 0) {
+        for (let i = 0; i < size; i += 1) {
+          for (let j = 0; j < size; j += 1) {
+            const pushMine = Math.random();
+            if (pushMine < probability && board[i][j].isMine === false) {
+              matrix[i][j].isMine = true;
+              mines -= 1;
+              if (mines === 0) {
+                return matrix;
+              }
+            }
+          }
+        }
+      }
+      return matrix;
+    }
+
+    matrix = placeMines(matrix, mines);
+
+    // this is a function to test how many mines each position is touching around itself
+
+    const checkMines = (matrix, row, column) => {
+      let touchingMines = 0;
+      if (matrix[row - 1] !== undefined) {
+        if (matrix[row - 1][column] !== undefined && matrix[row - 1][column].isMine === true) {
+          touchingMines += 1;
+        }
+        if (matrix[row - 1][column + 1] !== undefined && matrix[row - 1][column + 1].isMine === true) {
+          touchingMines += 1;
+        }
+        if (matrix[row - 1][column - 1] !== undefined && matrix[row - 1][column - 1].isMine === true) {
+          touchingMines += 1;
+        }
+      }
+      if (matrix[row + 1] !== undefined) {
+        if (matrix[row + 1][column] !== undefined && matrix[row + 1][column].isMine === true) {
+          touchingMines += 1;
+        }
+        if (matrix[row + 1][column + 1] !== undefined && matrix[row + 1][column + 1].isMine === true) {
+          touchingMines += 1;
+        }
+        if (matrix[row + 1][column - 1] !== undefined && matrix[row + 1][column - 1].isMine === true) {
+          touchingMines += 1;
+        }
+      }
+      if (matrix[row][column + 1] !== undefined && matrix[row][column + 1].isMine === true){
+        touchingMines += 1;
+      }
+      if (matrix[row][column - 1] !== undefined && matrix[row][column - 1].isMine === true) {
+        touchingMines += 1;
+      }
+      return touchingMines;
+    } 
+
+    for (let i = 0; i < size; i += 1) {
+      for (let j = 0; j < size; j += 1) {
+        let mines = checkMines(matrix, i, j);
+        matrix[i][j].minesTouching = mines;
+      }
+    }
+    return matrix;
+  }
+
+  componentDidMount(){
+    const matrix = this.buildMatrix(10);
+    console.log(matrix);
+    this.setState({board: matrix});
+  }
+
+  handleClick(event){
+    event.preventDefault();
+    let row = event.target.id[0];
+    let column = event.target.id[2];
+    let newState = Object.assign({}, this.state);
+    newState.board[row][column].isClicked = true;
+    if (newState.board[row][column].minesTouching === 0) {
+      newState.board = this.fillZeros(row, column, newState.board);
+    }
+    this.setState(newState);
+    console.log('left');
+  }
+
+  handleRightClick(event){
+    event.preventDefault();
+    let row = event.target.id[0];
+    let column = event.target.id[2];
+    let newState = Object.assign({}, this.state);
+    if (newState.board[row][column].isFlagged === false) {
+      newState.board[row][column].isFlagged = true;
+    } else {
+      newState.board[row][column].isFlagged = false;
+    }
+    this.setState(newState);
+    console.log('right');
+  }
+
+  //function that checks for zeros around a square and marks them as checked
+  fillZeros(row, column, matrix) {
+    column = Number(column);
+    row = Number(row);
+    debugger;
+    //recursively checks for 0's and clicks them
+    const checkAround = (row, column) => {
+      if (matrix[row][column - 1] !== undefined && matrix[row][column - 1].isMine === false && matrix[row][column - 1].isClicked === false) {
+        if (matrix[row][column - 1].minesTouching === 0) {
+          matrix[row][column - 1].isClicked = true;
+          checkAround(row, column - 1);
+        } else {
+          matrix[row][column - 1].isClicked = true;
+        }
+      }
+      if (matrix[row][column + 1] !== undefined && matrix[row][column + 1].isMine === false && matrix[row][column + 1].isClicked === false ) {
+        if (matrix[row][column + 1].minesTouching === 0) {
+          matrix[row][column + 1].isClicked = true;
+          checkAround(row, column + 1);
+        } else {
+          matrix[row][column + 1].isClicked = true;
+        }
+      }
+      if (matrix[row - 1] !== undefined && matrix[row - 1][column].isClicked === false && matrix[row-1][column].isMine === false) {
+        if (matrix[row - 1][column].minesTouching === 0 ) {
+          matrix[row - 1][column].isClicked = true;
+          checkAround(row - 1, column);
+        } else {
+          matrix[row - 1][column].isClicked = true;
+        }
+        
+      }
+      if (matrix[row + 1] !== undefined && matrix[row + 1][column].isClicked === false && matrix[row + 1][column].isMine === false) {
+        if (matrix[row + 1][column].minesTouching === 0) {
+          matrix[row + 1][column].isClicked = true;
+          checkAround(row + 1, column);
+        } else {
+          matrix[row + 1][column].isClicked = true;
+        }
+
+      }
+      if (matrix[row + 1] !== undefined && matrix[row + 1][column + 1] !== undefined && matrix[row + 1][column + 1].isClicked === false && matrix[row + 1][column + 1].isMine === false) {
+        if (matrix[row + 1][column + 1].minesTouching === 0) {
+          matrix[row + 1][column + 1].isClicked = true;
+          checkAround(row + 1, column + 1);
+        } else {
+          matrix[row + 1][column + 1].isClicked = true;
+        }
+
+      }
+      if (matrix[row + 1] !== undefined && matrix[row + 1][column - 1] !== undefined && matrix[row + 1][column - 1].isClicked === false && matrix[row + 1][column - 1].isMine === false) {
+        if (matrix[row + 1][column - 1].minesTouching === 0) {
+          matrix[row + 1][column - 1].isClicked = true;
+          checkAround(row + 1, column + 1);
+        } else {
+          matrix[row + 1][column - 1].isClicked = true;
+        }
+
+      }
+      if (matrix[row - 1] !== undefined && matrix[row - 1][column + 1] !== undefined && matrix[row - 1][column + 1].isClicked === false && matrix[row - 1][column + 1].isMine === false) {
+        if (matrix[row - 1][column + 1].minesTouching === 0) {
+          matrix[row - 1][column + 1].isClicked = true;
+          checkAround(row - 1, column + 1);
+        } else {
+          matrix[row - 1][column + 1].isClicked = true;
+        }
+
+      }
+      if (matrix[row - 1] !== undefined && matrix[row - 1][column - 1] !== undefined && matrix[row - 1][column - 1].isClicked === false && matrix[row - 1][column - 1].isMine === false) {
+        if (matrix[row - 1][column - 1].minesTouching === 0) {
+          matrix[row - 1][column - 1].isClicked = true;
+          checkAround(row - 1, column - 1);
+        } else {
+          matrix[row - 1][column - 1].isClicked = true;
+        }
+
+      }
+    }
+    checkAround(row, column);
+    return matrix;
+  }
+
+  render() {
+    if (this.state.board.length === 0) {
+      return <div>Waiting</div>
+    } else {
+      return (
+        <div className="board">
+          {
+            this.state.board.map((row) => {
+              return <BoardRow row={row} click={this.handleClick} rightClick={this.handleRightClick}/>
+            })
+          }
+        </div>
+      );
+    }
+  }
+}
+
+export default App;
