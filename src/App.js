@@ -8,9 +8,12 @@ class App extends Component {
     super(props);
     this.state = {
       board: [],
+      difficulty: 'Easy',
     }
     this.handleClick = this.handleClick.bind(this);
     this.handleRightClick = this.handleRightClick.bind(this);
+    this.startGame = this.startGame.bind(this);
+    this.changeDifficulty = this.changeDifficulty.bind(this);
   }
   
   //this is a function for setting up the minefield
@@ -104,12 +107,6 @@ class App extends Component {
       }
     }
     return matrix;
-  }
-
-  componentDidMount(){
-    const matrix = this.buildMatrix(10);
-    console.log(matrix);
-    this.setState({board: matrix});
   }
 
   handleClick(event){
@@ -221,9 +218,39 @@ class App extends Component {
     return matrix;
   }
 
+  changeDifficulty(event) {
+    event.preventDefault();
+    this.setState({ difficulty: event.target.value });
+  }
+
+  startGame(event) {
+    event.preventDefault();
+    if (this.state.difficulty === 'Easy') {
+      const matrix = this.buildMatrix(10, 10);
+      this.setState({ board: matrix });
+    }
+    if (this.state.difficulty === 'Medium') {
+      const matrix = this.buildMatrix(20, 25);
+      this.setState({ board: matrix });
+    }
+    if (this.state.difficulty === 'Medium') {
+      const matrix = this.buildMatrix(40, 50);
+      this.setState({ board: matrix });
+    }
+  }
+  
   render() {
     if (this.state.board.length === 0) {
-      return <div>Waiting</div>
+      return (
+        <div>
+          <select onChange={this.changeDifficulty}>
+            <option value='Easy'>Easy</option>
+            <option value='Medium'>Medium</option>
+            <option value='Hard'>Hard</option>
+          </select>
+          <button onClick={this.startGame}>START</button>
+        </div>
+      )
     } else {
       return (
         <div className="board">
